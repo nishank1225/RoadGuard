@@ -115,3 +115,254 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgb(var(--border)); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgb(var(--text-muted)); }
+
+/* =========================================================================
+   RoadGuard Editorial Login & Atmospheric Visual
+   ========================================================================= */
+
+@keyframes rgLoginCardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rgFadeUpItem {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rgAtmosphereSky {
+  0% {
+    filter: brightness(1) contrast(1.02);
+  }
+  50% {
+    filter: brightness(1.06) contrast(1);
+  }
+  100% {
+    filter: brightness(0.97) contrast(1.03);
+  }
+}
+
+@keyframes rgRoadPerspective {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    transform: scale(1.02) translateY(-4px);
+  }
+}
+
+@keyframes rgFogDriftA {
+  0% {
+    transform: translateX(-12%) translateY(0);
+  }
+  50% {
+    transform: translateX(6%) translateY(-3px);
+  }
+  100% {
+    transform: translateX(18%) translateY(0);
+  }
+}
+
+@keyframes rgFogDriftB {
+  0% {
+    transform: translateX(15%) translateY(0);
+  }
+  50% {
+    transform: translateX(-5%) translateY(2px);
+  }
+  100% {
+    transform: translateX(-18%) translateY(0);
+  }
+}
+
+@keyframes rgTrafficPulseA {
+  0%, 100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes rgTrafficPulseB {
+  0%, 100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes rgMoonHalo {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes rgMarkerRadar {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  60% {
+    transform: scale(2.4);
+    opacity: 0.15;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+.rg-login-page {
+  background-color: #fefffc;
+  color: #171717;
+}
+
+.rg-login-card {
+  background-color: #ffffff;
+  border: 1px solid #dee2de;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  animation: rgLoginCardEnter 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.rg-anim-heading {
+  animation: rgFadeUpItem 600ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+
+.rg-anim-email {
+  animation: rgFadeUpItem 500ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
+
+.rg-anim-password {
+  animation: rgFadeUpItem 500ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
+}
+
+.rg-anim-action {
+  animation: rgFadeUpItem 500ms cubic-bezier(0.16, 1, 0.3, 1) 340ms both;
+}
+
+.rg-anim-editorial {
+  animation: rgFadeUpItem 900ms cubic-bezier(0.16, 1, 0.3, 1) 400ms both;
+}
+
+.rg-editorial-input {
+  background-color: #f9faf7;
+  border: 1px solid #dee2de;
+  border-bottom: 2px solid #b4b8b4;
+  border-radius: 4px;
+  height: 50px;
+  color: #171717;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.rg-editorial-input:focus,
+.rg-editorial-input:focus-within {
+  border-color: #dee2de;
+  border-bottom-color: #41a1cf;
+  background-color: #ffffff;
+  outline: none;
+}
+
+.rg-editorial-btn {
+  background-color: #1f1f29;
+  color: #ffffff;
+  border: 1px solid #282834;
+  border-radius: 8px;
+  height: 50px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.rg-editorial-btn:hover:not(:disabled) {
+  background-color: #282834;
+  border-color: #383848;
+}
+
+.rg-editorial-btn:hover:not(:disabled) .rg-btn-arrow {
+  transform: translateX(3px);
+}
+
+.rg-visual-sky-anim {
+  animation: rgAtmosphereSky 28s ease-in-out infinite alternate;
+}
+
+.rg-visual-road-anim {
+  animation: rgRoadPerspective 24s ease-in-out infinite alternate;
+  transform-origin: center 40%;
+}
+
+.rg-fog-layer-1 {
+  animation: rgFogDriftA 26s ease-in-out infinite alternate;
+}
+
+.rg-fog-layer-2 {
+  animation: rgFogDriftB 34s ease-in-out infinite alternate;
+}
+
+.rg-fog-layer-3 {
+  animation: rgFogDriftA 30s ease-in-out infinite alternate;
+}
+
+.rg-moon-glow-anim {
+  animation: rgMoonHalo 12s ease-in-out infinite alternate;
+  transform-origin: center center;
+}
+
+.rg-traffic-1 {
+  animation: rgTrafficPulseA 4.5s ease-in-out infinite;
+}
+
+.rg-traffic-2 {
+  animation: rgTrafficPulseB 6.2s ease-in-out infinite;
+}
+
+.rg-traffic-3 {
+  animation: rgTrafficPulseA 7.5s ease-in-out infinite;
+}
+
+.rg-marker-radar {
+  animation: rgMarkerRadar 4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  transform-origin: center center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rg-login-card,
+  .rg-anim-heading,
+  .rg-anim-email,
+  .rg-anim-password,
+  .rg-anim-action,
+  .rg-anim-editorial,
+  .rg-visual-sky-anim,
+  .rg-visual-road-anim,
+  .rg-fog-layer-1,
+  .rg-fog-layer-2,
+  .rg-fog-layer-3,
+  .rg-moon-glow-anim,
+  .rg-traffic-1,
+  .rg-traffic-2,
+  .rg-traffic-3,
+  .rg-marker-radar {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+

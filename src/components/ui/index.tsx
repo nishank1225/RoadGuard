@@ -75,3 +75,6 @@ export function Toast({ message, type = 'info', onClose }: { message: string; ty
     </div>
   );
 }
+
+export * from './floating-dock';
+
