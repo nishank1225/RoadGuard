@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
@@ -29,6 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [state, setState] = useState<AuthState>('loading');
 
+  const passwordVerificationRef = useRef(false);
+
   async function loadProfile(uid: string) {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
     if (error) return null;
@@ -51,6 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
       (async () => {
+        if (passwordVerificationRef.current && event === 'SIGNED_IN') {
+          return;
+        }
         if (event === 'SIGNED_OUT' || !sess) {
           setSession(null); setProfile(null); setState('unauthenticated');
           return;
@@ -67,8 +72,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    passwordVerificationRef.current = true;
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      // Password is correct.
+      // Remove the temporary password session.
+      // OTP verification will create the final session.
+      await supabase.auth.signOut();
+    } finally {
+      passwordVerificationRef.current = false;
+    }
   };
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -112,8 +132,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   const sendOtp = async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
-      email, options: { shouldCreateUser: true },
+      email,
+      options: {
+        shouldCreateUser: false,
+      },
     });
+
     if (error) throw error;
   };
   const verifyOtpAndSignUp = async (

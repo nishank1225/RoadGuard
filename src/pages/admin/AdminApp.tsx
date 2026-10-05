@@ -14,6 +14,16 @@ import { AdminAnalytics } from '@/pages/admin/AdminAnalytics';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
 import { initials } from '@/lib/format';
 
+import {
+  IconLayoutDashboard,
+  IconClipboardList,
+  IconMessageReport,
+  IconUsers,
+  IconMap,
+  IconChartBar,
+} from '@tabler/icons-react';
+import { FloatingDock, type FloatingDockItem } from '@/components/ui/floating-dock';
+
 type Tab = 'dashboard' | 'reports' | 'complaints' | 'users' | 'map' | 'analytics';
 
 export function AdminApp() {
@@ -24,6 +34,21 @@ export function AdminApp() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [notifs, setNotifs] = useState<NotificationItem[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
+
+  // Sync hash routing if present
+  useEffect(() => {
+    const handleHash = () => {
+      const h = window.location.hash.replace('#', '');
+      if (['dashboard', 'reports', 'complaints', 'users', 'map', 'analytics'].includes(h)) {
+        setTab(h as Tab);
+      }
+    };
+    if (window.location.hash) {
+      handleHash();
+    }
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   const loadReports = useCallback(async () => {
     const { data } = await supabase.from('reports').select('*, reporter:profiles!reports_user_id_fkey(id,full_name,email,avatar_url)').order('created_at', { ascending: false });
@@ -60,61 +85,85 @@ export function AdminApp() {
 
   const unread = notifs.filter((n) => !n.read).length;
 
-  const nav: { key: Tab; label: string; icon: typeof LayoutDashboard }[] = [
-    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { key: 'reports', label: 'Reports', icon: FileText },
-    { key: 'complaints', label: 'Complaints', icon: Building2 },
-    { key: 'users', label: 'Users', icon: Users },
-    { key: 'map', label: 'Map', icon: MapIcon },
-    { key: 'analytics', label: 'Analytics', icon: BarChart3 },
+  const adminNavItems: FloatingDockItem[] = [
+    {
+      title: 'Dashboard',
+      icon: <IconLayoutDashboard className="h-full w-full" />,
+      href: '#dashboard',
+      onClick: () => {
+        setTab('dashboard');
+        window.location.hash = 'dashboard';
+      },
+      active: tab === 'dashboard',
+    },
+    {
+      title: 'Reports',
+      icon: <IconClipboardList className="h-full w-full" />,
+      href: '#reports',
+      onClick: () => {
+        setTab('reports');
+        window.location.hash = 'reports';
+      },
+      active: tab === 'reports',
+    },
+    {
+      title: 'Complaints',
+      icon: <IconMessageReport className="h-full w-full" />,
+      href: '#complaints',
+      onClick: () => {
+        setTab('complaints');
+        window.location.hash = 'complaints';
+      },
+      active: tab === 'complaints',
+    },
+    {
+      title: 'Users',
+      icon: <IconUsers className="h-full w-full" />,
+      href: '#users',
+      onClick: () => {
+        setTab('users');
+        window.location.hash = 'users';
+      },
+      active: tab === 'users',
+    },
+    {
+      title: 'Map',
+      icon: <IconMap className="h-full w-full" />,
+      href: '#map',
+      onClick: () => {
+        setTab('map');
+        window.location.hash = 'map';
+      },
+      active: tab === 'map',
+    },
+    {
+      title: 'Analytics',
+      icon: <IconChartBar className="h-full w-full" />,
+      href: '#analytics',
+      onClick: () => {
+        setTab('analytics');
+        window.location.hash = 'analytics';
+      },
+      active: tab === 'analytics',
+    },
   ];
 
   return (
     <div className="min-h-screen flex surface">
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-60 border-r border-base surface sticky top-0 h-screen">
-        <div className="p-5 flex items-center gap-2.5 border-b border-base">
-          <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center text-white"><ShieldCheck size={20} /></div>
-          <div><div className="font-display font-bold leading-none">RoadGuard</div><div className="text-[10px] text-muted">Admin Console</div></div>
-        </div>
-        <nav className="flex-1 p-3 space-y-1">
-          {nav.map((n) => {
-            const Icon = n.icon; const active = tab === n.key;
-            return <button key={n.key} onClick={() => setTab(n.key)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${active ? 'bg-primary-600 text-white shadow-sm' : 'hover:surface-2 text-muted'}`}>
-              <Icon size={18} /> {n.label}
-            </button>;
-          })}
-        </nav>
-        <div className="p-3 border-t border-base">
-          <div className="flex items-center gap-2.5 p-2">
-            <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-500/20 text-primary-600 flex items-center justify-center text-xs font-bold">{profile?.avatar_url ? <img src={profile.avatar_url} className="w-full h-full rounded-full" alt="" /> : initials(profile?.full_name || 'A')}</div>
-            <div className="flex-1 min-w-0"><div className="text-sm font-semibold truncate">{profile?.full_name}</div><div className="text-[10px] text-muted">Administrator</div></div>
-            <button onClick={signOut} className="p-1.5 rounded-lg hover:surface-2 text-muted"><LogOut size={16} /></button>
-          </div>
-        </div>
-      </aside>
 
-      {/* Mobile header */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
         <Header profile={profile} theme={theme} toggleTheme={toggle} unread={unread} onBell={() => setShowNotifs(true)} onSignOut={signOut} />
-        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto w-full">
-          {tab === 'dashboard' && <AdminDashboard reports={reports} users={users} onNavigate={setTab} />}
+        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-28 max-w-7xl mx-auto w-full">
+          {tab === 'dashboard' && <AdminDashboard reports={reports} users={users} onNavigate={(t) => { setTab(t); window.location.hash = t; }} />}
           {tab === 'reports' && <AdminReports reports={reports} onChange={loadReports} />}
           {tab === 'complaints' && <AdminComplaints />}
           {tab === 'users' && <AdminUsers users={users} onChange={loadUsers} />}
           {tab === 'map' && <AdminMap reports={reports} />}
           {tab === 'analytics' && <AdminAnalytics reports={reports} users={users} />}
         </main>
-        {/* Mobile bottom nav */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 glass border-t border-base">
-          <div className="flex items-center justify-around h-16">
-            {nav.map((n) => { const Icon = n.icon; const active = tab === n.key; return (
-              <button key={n.key} onClick={() => setTab(n.key)} className="flex flex-col items-center gap-0.5 flex-1 py-2">
-                <Icon size={20} className={active ? 'text-primary-600' : 'text-muted'} />
-                <span className={`text-[10px] ${active ? 'text-primary-600 font-semibold' : 'text-muted'}`}>{n.label}</span>
-              </button>); })}
-          </div>
-        </nav>
+        {/* Floating Dock navigation */}
+        <FloatingDock items={adminNavItems} />
       </div>
       {showNotifs && <NotificationsPanel notifs={notifs} onClose={() => setShowNotifs(false)} onReload={loadNotifs} />}
     </div>

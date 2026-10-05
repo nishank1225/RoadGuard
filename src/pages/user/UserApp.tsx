@@ -12,6 +12,15 @@ import { ReportFlow } from '@/pages/user/ReportFlow';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
 import { initials } from '@/lib/format';
 
+import {
+  IconLayoutDashboard,
+  IconAlertTriangle,
+  IconFileDescription,
+  IconMap,
+  IconUser,
+} from '@tabler/icons-react';
+import { FloatingDock, type FloatingDockItem } from '@/components/ui/floating-dock';
+
 type Tab = 'home' | 'map' | 'camera' | 'history' | 'profile';
 
 export function UserApp() {
@@ -22,9 +31,38 @@ export function UserApp() {
   const [notifs, setNotifs] = useState<NotificationItem[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
 
+  // Sync hash routing if present
+  useEffect(() => {
+    const handleHash = () => {
+      const h = window.location.hash.replace('#', '');
+      if (['home', 'map', 'camera', 'history', 'profile'].includes(h)) {
+        setTab(h as Tab);
+      }
+    };
+    if (window.location.hash) {
+      handleHash();
+    }
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
   const loadReports = useCallback(async () => {
     if (!profile) return;
-    const { data } = await supabase.from('reports').select('*').eq('user_id', profile.id).order('created_at', { ascending: false });
+
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Failed to load user reports:', error);
+      return;
+    }
+
+    console.log('Loaded user reports:', data);
+    console.log('Current profile ID:', profile.id);
+
     setReports((data ?? []) as Report[]);
   }, [profile]);
 
@@ -52,12 +90,57 @@ export function UserApp() {
 
   const unread = notifs.filter((n) => !n.read).length;
 
-  const nav: { key: Tab; label: string; icon: typeof Home }[] = [
-    { key: 'home', label: 'Home', icon: Home },
-    { key: 'map', label: 'Map', icon: Map },
-    { key: 'camera', label: 'Report', icon: Camera },
-    { key: 'history', label: 'History', icon: History },
-    { key: 'profile', label: 'Profile', icon: User },
+  const userNavItems: FloatingDockItem[] = [
+    {
+      title: 'Dashboard',
+      icon: <IconLayoutDashboard className="h-full w-full" />,
+      href: '#home',
+      onClick: () => {
+        setTab('home');
+        window.location.hash = 'home';
+      },
+      active: tab === 'home',
+    },
+    {
+      title: 'Report Road',
+      icon: <IconAlertTriangle className="h-full w-full" />,
+      href: '#camera',
+      onClick: () => {
+        setTab('camera');
+        window.location.hash = 'camera';
+      },
+      active: tab === 'camera',
+    },
+    {
+      title: 'My Reports',
+      icon: <IconFileDescription className="h-full w-full" />,
+      href: '#history',
+      onClick: () => {
+        setTab('history');
+        window.location.hash = 'history';
+      },
+      active: tab === 'history',
+    },
+    {
+      title: 'Map',
+      icon: <IconMap className="h-full w-full" />,
+      href: '#map',
+      onClick: () => {
+        setTab('map');
+        window.location.hash = 'map';
+      },
+      active: tab === 'map',
+    },
+    {
+      title: 'Profile',
+      icon: <IconUser className="h-full w-full" />,
+      href: '#profile',
+      onClick: () => {
+        setTab('profile');
+        window.location.hash = 'profile';
+      },
+      active: tab === 'profile',
+    },
   ];
 
   return (
@@ -70,7 +153,7 @@ export function UserApp() {
         {tab === 'history' && <UserHistory reports={reports} onChange={loadReports} />}
         {tab === 'profile' && <UserProfile />}
       </main>
-      <BottomNav nav={nav} tab={tab} setTab={setTab} />
+      <FloatingDock items={userNavItems} />
       {showNotifs && <NotificationsPanel notifs={notifs} onClose={() => setShowNotifs(false)} onReload={loadNotifs} />}
     </div>
   );

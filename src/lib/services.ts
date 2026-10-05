@@ -82,6 +82,30 @@ export async function adminCreateUser(email: string, fullName: string, password:
   return data as string;
 }
 
+export async function sendEmailOTP(email: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+    },
+  });
+
+  if (error) throw error;
+}
+
+export async function verifyEmailOTP(
+  email: string,
+  token: string
+): Promise<void> {
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  });
+
+  if (error) throw error;
+}
+
 export const BBMP_AUTHORITY = {
   name: 'BBMP — Bruhat Bengaluru Mahanagara Palike',
   email: 'comm@bbmp.gov.in',
@@ -94,10 +118,38 @@ export const BBMP_AUTHORITY = {
 export async function fetchComplaints(): Promise<AuthorityComplaint[]> {
   const { data, error } = await supabase
     .from('authority_complaints')
-    .select('*, report:reports!authority_complaints_report_id_fkey(id,damage_type,severity,image_url)')
+    .select(`
+      *,
+      report:reports!authority_complaints_report_id_fkey(
+        id,
+        damage_type,
+        severity,
+        image_url,
+        latitude,
+        longitude
+      )
+    `)
     .order('created_at', { ascending: false });
+
   if (error) throw error;
-  return (data ?? []) as unknown as AuthorityComplaint[];
+
+  return (data ?? []).map((row) => {
+    const report = Array.isArray(row.report) ? row.report[0] : row.report;
+
+    const latitude = row.latitude ?? report?.latitude ?? null;
+    const longitude = row.longitude ?? report?.longitude ?? null;
+
+    return {
+      ...row,
+      latitude,
+      longitude,
+      location_text:
+        row.location_text ??
+        (latitude !== null && longitude !== null
+          ? `${Number(latitude).toFixed(6)}, ${Number(longitude).toFixed(6)}`
+          : null),
+    };
+  }) as unknown as AuthorityComplaint[];
 }
 
 export async function createComplaint(c: Partial<AuthorityComplaint>): Promise<AuthorityComplaint> {
