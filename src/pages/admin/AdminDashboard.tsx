@@ -2,6 +2,7 @@ import { Users, FileText, CheckCircle2, XCircle, Clock, AlertTriangle, Activity,
 import type { Report, Profile } from '@/lib/types';
 import { Card, StatCard, Badge, EmptyState } from '@/components/ui';
 import { LineChart, DonutChart, ProgressBar } from '@/components/Charts';
+import SeverityDistribution from '@/components/ui/severity-distribution';
 import { severityBgClass, statusBgClass, timeAgo, severityColor } from '@/lib/format';
 import { DAMAGE_TYPE_LABEL, SEVERITY_LABEL, STATUS_LABEL } from '@/lib/types';
 
@@ -29,6 +30,13 @@ export function AdminDashboard({ reports, users, onNavigate }: { reports: Report
     { label: 'Rejected', value: rejected.length, color: '#ef4444' },
     { label: 'Other', value: reports.length - pending.length - approved.length - rejected.length, color: '#64748b' },
   ].filter((d) => d.value > 0);
+
+  const severityData = (['low', 'medium', 'high', 'critical'] as const).map(
+    (severity) => ({
+      severity,
+      count: reports.filter((r) => r.severity === severity).length,
+    })
+  );
 
   const avgSev = reports.length ? (reports.reduce((s, r) => s + ({ low: 1, medium: 2, high: 3, critical: 4 }[r.severity]), 0) / reports.length).toFixed(1) : '0';
 
@@ -64,8 +72,9 @@ export function AdminDashboard({ reports, users, onNavigate }: { reports: Report
           <LineChart data={days} height={220} />
         </Card>
         <Card>
-          <h3 className="font-display font-semibold mb-4">Status Distribution</h3>
-          {reports.length > 0 ? <DonutChart data={statusData} /> : <EmptyState icon={<TrendingUp size={28} />} title="No data" />}
+          <SeverityDistribution
+            data={severityData}
+          />
         </Card>
       </div>
 

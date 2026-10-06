@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
+
 import { MapPin, CloudSun, TrendingUp, AlertTriangle, CheckCircle2, Clock, Activity, Navigation, Camera, Bell } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import type { Report } from '@/lib/types';
+
+import type { ContributionDay } from '@/components/ui/contribution-skyline';
+import ContributionSkyline from '@/components/ui/contribution-skyline';
+import { supabase } from '@/lib/supabase';
+
 import { Card, StatCard, Badge, EmptyState } from '@/components/ui';
-import { ProgressBar, DonutChart } from '@/components/Charts';
+import { ProgressBar } from '@/components/Charts';
+
+import SeverityDistribution from '@/components/ui/severity-distribution';
+
 import { severityBgClass, statusBgClass, timeAgo, severityColor } from '@/lib/format';
 import { DAMAGE_TYPE_LABEL, SEVERITY_LABEL, STATUS_LABEL } from '@/lib/types';
 
@@ -11,6 +20,8 @@ export function UserHome({ reports, onNavigate }: { reports: Report[]; onNavigat
   const { profile } = useAuth();
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [weather, setWeather] = useState<{ temp: number; cond: string } | null>(null);
+  const [globalActivity, setGlobalActivity] = useState<ContributionDay[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
@@ -22,6 +33,55 @@ export function UserHome({ reports, onNavigate }: { reports: Report[]; onNavigat
       () => { setGps({ lat: 6.9271, lng: 79.8612 }); setWeather({ temp: 28, cond: 'Clear' }); },
       { enableHighAccuracy: true, timeout: 5000 }
     );
+  }, []);
+  useEffect(() => {
+    let mounted = true;
+
+    const loadGlobalActivity = async () => {
+      setActivityLoading(true);
+
+      const { data, error } = await supabase.rpc(
+        'get_global_report_activity',
+        {
+          p_days: 365,
+        }
+      );
+
+      if (error) {
+        console.error(
+          'Failed to load global report activity:',
+          error
+        );
+
+        if (mounted) {
+          setGlobalActivity([]);
+          setActivityLoading(false);
+        }
+
+        return;
+      }
+
+      const activity: ContributionDay[] = (data ?? []).map(
+        (row: {
+          report_date: string;
+          report_count: number;
+        }) => ({
+          date: row.report_date,
+          count: Number(row.report_count),
+        })
+      );
+
+      if (mounted) {
+        setGlobalActivity(activity);
+        setActivityLoading(false);
+      }
+    };
+
+    loadGlobalActivity();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const approved = reports.filter((r) => r.status === 'approved');
@@ -92,8 +152,16 @@ export function UserHome({ reports, onNavigate }: { reports: Report[]; onNavigat
       {/* Road condition summary */}
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
-          <h3 className="font-display font-semibold mb-4">Severity Distribution</h3>
-          {reports.length > 0 ? <DonutChart data={sevData} /> : <EmptyState icon={<TrendingUp size={28} />} title="No data yet" subtitle="Reports will appear here" />}
+          <SeverityDistribution
+            data={sevData.map((item) => ({
+              severity: item.label.toLowerCase() as
+                | "low"
+                | "medium"
+                | "high"
+                | "critical",
+              count: item.value,
+            }))}
+          />
         </Card>
         <Card>
           <h3 className="font-display font-semibold mb-4">Road Condition Summary</h3>
@@ -109,6 +177,55 @@ export function UserHome({ reports, onNavigate }: { reports: Report[]; onNavigat
           )}
         </Card>
       </div>
+
+      {/* Global RoadGuard Activity */}
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-display font-semibold">
+              RoadGuard Community Activity
+            </h3>
+
+            <p className="text-sm text-muted mt-1">
+              Combined road reports submitted by all users
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-muted">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
+
+            Live
+          </div>
+        </div>
+
+        {activityLoading ? (
+          <div className="h-[320px] flex items-center justify-center text-sm text-muted">
+            Loading community activity...
+          </div>
+        ) : (
+          <ContributionSkyline
+            data={globalActivity}
+            defaultView="3d"
+            palette="github"
+            unit="report"
+            unitPlural="reports"
+            title="Road reports in the last year"
+            showStats={true}
+            showLegend={true}
+            showToggle={true}
+            orbit={true}
+            onCellClick={(day) => {
+              console.log(
+                'Community report activity:',
+                day
+              );
+            }}
+          />
+        )}
+      </Card>
 
       {/* Recent detections */}
       <Card>

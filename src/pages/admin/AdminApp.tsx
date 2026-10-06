@@ -155,7 +155,7 @@ export function AdminApp() {
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Header profile={profile} theme={theme} toggleTheme={toggle} unread={unread} onBell={() => setShowNotifs(true)} onSignOut={signOut} />
         <main className="flex-1 p-4 md:p-6 pb-28 md:pb-28 max-w-7xl mx-auto w-full">
-          {tab === 'dashboard' && <AdminDashboard reports={reports} users={users} onNavigate={(t) => { setTab(t); window.location.hash = t; }} />}
+          {tab === 'dashboard' && <AdminDashboard reports={reports} users={users} onNavigate={(t: string) => { setTab(t); window.location.hash = t; }} />}
           {tab === 'reports' && <AdminReports reports={reports} onChange={loadReports} />}
           {tab === 'complaints' && <AdminComplaints />}
           {tab === 'users' && <AdminUsers users={users} onChange={loadUsers} />}
