@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Password is correct.
       // Remove the temporary password session.
       // OTP verification will create the final session.
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
     } finally {
       passwordVerificationRef.current = false;
     }
@@ -181,8 +181,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
   const signOut = async () => {
-    if (session) await logAudit('logout', 'auth', session.user.id);
-    await supabase.auth.signOut();
+    if (session) {
+      await logAudit('logout', 'auth', session.user.id);
+    }
+
+    await supabase.auth.signOut({
+      scope: 'local',
+    });
   };
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email);
