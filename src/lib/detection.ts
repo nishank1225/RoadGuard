@@ -9,11 +9,16 @@ import {
   healthFromSeverity,
 } from './predictor';
 
-// YOLOv8 class names — the pothole model is trained to detect these.
-// Index 0 = pothole (the primary class for this project).
+// RDD2022 classes used by the trained YOLOv8 model.
+// Multiple crack types are mapped to RoadGuard's single "crack" category.
 const YOLO_CLASSES: DamageType[] = [
-  'pothole', 'crack', 'surface_wear', 'road_depression', 'broken_edge', 'water_damage',
+  'crack',         // 0: Longitudinal Crack
+  'crack',         // 1: Transverse Crack
+  'crack',         // 2: Alligator Crack
+  'surface_wear',  // 3: Other Corruption
+  'pothole',       // 4: Pothole
 ];
+
 const NUM_CLASSES = YOLO_CLASSES.length;
 const INPUT_SIZE = 640;
 const MODEL_URL = '/models/yolov8_pothole.onnx';
@@ -82,7 +87,7 @@ function preprocess(img: HTMLImageElement): {
   const padX = Math.floor((INPUT_SIZE - newW) / 2);
   const padY = Math.floor((INPUT_SIZE - newH) / 2);
 
-  ctx.fillStyle = '#114';
+  ctx.fillStyle = 'rgb(114, 114, 114)';
   ctx.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
   ctx.drawImage(img, padX, padY, newW, newH);
 
@@ -159,8 +164,8 @@ function postprocess(
 
     const cx = transposed ? output[a * numAttrs + cxIdx] : output[cxIdx * numAnchors + a];
     const cy = transposed ? output[a * numAttrs + cyIdx] : output[cyIdx * numAnchors + a];
-    const w  = transposed ? output[a * numAttrs + wIdx]  : output[wIdx * numAnchors + a];
-    const h  = transposed ? output[a * numAttrs + hIdx]  : output[hIdx * numAnchors + a];
+    const w = transposed ? output[a * numAttrs + wIdx] : output[wIdx * numAnchors + a];
+    const h = transposed ? output[a * numAttrs + hIdx] : output[hIdx * numAnchors + a];
 
     // Map from 640×640 letterboxed space back to original image space, then normalize to [0,1].
     const origX = (cx - padX) / scale;
